@@ -1,0 +1,41 @@
+specVersion: 0.0.2
+repository: https://github.com/blocklords/seascape-smartcontracts
+description: Example of the Profit Circus game of Seascape Network
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: Contract
+    network: rinkeby
+    source:
+      address: "0x9f5FdC047e1C53D7255a0069071127A3769a2D48"
+      abi: Contract
+      startBlock: 8450664
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      entities:
+        - Claimed
+        - Deposited
+        - FactorySet
+        - OwnershipTransferred
+        - SessionStarted
+        - Withdrawn
+      abis:
+        - name: Contract
+          file: ./abis/Contract.json
+      eventHandlers:
+        - event: Claimed(indexed address,indexed address,uint256,uint256,uint256)
+          handler: handleClaimed
+        - event: Deposited(indexed address,indexed address,uint256,uint256,uint256,uint256)
+          handler: handleDeposited
+        - event: FactorySet(indexed address)
+          handler: handleFactorySet
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: SessionStarted(indexed address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleSessionStarted
+        - event: Withdrawn(indexed address,indexed address,uint256,uint256,uint256,uint256)
+          handler: handleWithdrawn
+      file: ./src/mapping.ts

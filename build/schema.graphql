@@ -1,0 +1,27 @@
+type Session @entity {
+  	id: ID!
+	transaction: String!
+  	stakingToken: Bytes!  		  # staked token, users earn CWS token
+  	totalReward: BigInt!        # amount of CWS to airdrop
+  	period: BigInt!        		  # session duration in seconds
+	startTime: BigInt!     		  # session start in unixtimestamp
+	generation: BigInt!    		  # Seascape Nft generation given for minted NFT in the game
+	claimed: BigInt!       		  # amount of already claimed CWS
+	amount: BigInt!        		  # total amount of deposited tokens to the session by users
+	rewardUnit: BigInt!    		  # reward per second = totalReward/period
+	interestPerToken: BigInt! 	# total earned interest per token since the beginning of the session
+	claimedPerToken: BigInt!    # total amount of tokens earned by a one staked token, since the beginning of the session
+	lastInterestUpdate: BigInt! # last time when claimedPerToken and interestPerToken
+}
+
+type Balance @entity {
+  	id: ID!
+	owner: Bytes!
+  	amount: BigInt!        		  # amount of deposited token
+	minted: Boolean           	# Seascape Nft is claimed or not, for every session, user can claim one nft only
+  	session: Session
+	claimed: BigInt!       		  # amount of claimed CWS reward
+	claimedReward: BigInt!
+	claimedTime: BigInt!
+	unpaidReward: BigInt!       # Amount of CWS that contract should pay to user
+}
