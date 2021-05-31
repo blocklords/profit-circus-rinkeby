@@ -42,7 +42,7 @@ function updateBalanceInterestPerToken(session: Session | null, balance: Balance
     return balance
   }
 
-  balance.claimedReward = BigInt.fromI32(session.claimedPerToken.toI32() * balance.amount.toI32())
+  balance.claimedReward = session.claimedPerToken.plus(balance.amount);
 
   return balance
 }
@@ -52,10 +52,10 @@ function isActive(now: BigInt, session: Session | null): boolean {
     return false
   }
 
-  let endTime = session.startTime.toI32() + session.period.toI32()
+  let endTime = session.startTime.plus(session.period)
 
   // _endTime will be 0 if session never started.
-  if (now.toI32() < session.startTime.toI32() || now.toI32() > endTime) {
+  if (now < session.startTime || now > endTime) {
       return false
   }
 
@@ -74,20 +74,18 @@ function calculateInterest(timestamp: BigInt, session: Session | null, balance: 
 
 		let sessionCap = timestamp;
 		if (isActive(timestamp, session) == false) {
-			sessionCap = BigInt.fromI32(session.startTime.toI32() + session.period.toI32())
+			sessionCap = session.startTime.plus(session.period)
 
 			// claimed after session expire, means no any claimables
 			if (balance.claimedTime >= sessionCap) {
 				return BigInt.fromI32(0);
 			}
 		}
-
-		let claimedPerToken = session.claimedPerToken.toI32() + ((sessionCap.toI32() - session.lastInterestUpdate.toI32()) * session.interestPerToken.toI32())
-		
+    let claimedPerToken = session.claimedPerToken.plus((sessionCap.minus(session.lastInterestUpdate)).times(session.interestPerToken))
 		// (balance * total claimable) - user deposit earned amount per token - balance.claimedTime
-    let	interest = balance.amount.toI32() * claimedPerToken - balance.claimedReward.toI32()
+    let	interest = balance.amount.times(claimedPerToken).minus(balance.claimedReward)
 
-		return BigInt.fromI32(interest)
+		return interest;
 }
 
 function updateClaiming(timestamp: BigInt, session: Session | null, balance: Balance | null): void {
@@ -102,31 +100,30 @@ function updateClaiming(timestamp: BigInt, session: Session | null, balance: Bal
 
   // we avoid sub. underflow, for calulating session.claimedPerToken
   if (isActive(timestamp, session) == false) {
-    balance.claimedTime = BigInt.fromI32(session.startTime.toI32() + session.period.toI32())
+    balance.claimedTime = session.startTime.plus(session.period)
   } else {
     balance.claimedTime = timestamp
   }
-
-  session.claimed     = BigInt.fromI32(session.claimed.toI32() + interest.toI32())
-  balance.claimed     = BigInt.fromI32(balance.claimed.toI32() + interest.toI32())
+  session.claimed     = session.claimed.plus(interest)
+  session.claimed     = session.claimed.plus(interest)
 }
 
 function updateInterestPerToken(timestamp: BigInt, session: Session | null): (Session | null) {
   if (session == null) {
     return session
   }
-  let timeDuration = timestamp.toI32() - session.lastInterestUpdate.toI32()
+  let timeDuration = timestamp.minus(session.lastInterestUpdate)
   
   // I calculate previous claimed rewards
   // (session.claimedPerToken += (now - session.lastInterestUpdate) * session.interestPerToken)
-	session.claimedPerToken = BigInt.fromI32(session.claimedPerToken.toI32() + (timeDuration * session.interestPerToken.toI32()))
+	session.claimedPerToken = session.claimedPerToken.plus(timeDuration.times(session.interestPerToken))
 
   // I record that interestPerToken is 0.1 CWS (rewardUnit/amount) in session.interestPerToken
   // I update the session.lastInterestUpdate to now
   if (session.amount.isZero()) {
 		session.interestPerToken = BigInt.fromI32(0)
 	} else {
-	  session.interestPerToken = BigInt.fromI32(session.rewardUnit.toI32() / session.amount.toI32()) // 0.1
+	  session.interestPerToken = session.rewardUnit.div(session.amount) // 0.1
 	}
 
 	// we avoid sub. underflow, for calulating session.claimedPerToken
@@ -156,12 +153,12 @@ export function handleSessionStarted(event: SessionStarted): void {
 
   session.stakingToken = event.params.stakingToken // staked token, users earn CWS token
   session.totalReward = event.params.reward        // amount of CWS to airdrop
-  session.period = BigInt.fromI32(event.params.endTime.toI32() - event.params.startTime.toI32())         		  // session duration in seconds
+  session.period = event.params.endTime.minus(event.params.startTime)         		  // session duration in seconds
 	session.startTime = event.params.startTime     		  // session start in unixtimestamp
 	session.generation = event.params.generation    		  // Seascape Nft generation given for minted NFT in the game
 	session.claimed = BigInt.fromI32(0)       		  // amount of already claimed CWS
 	session.amount = BigInt.fromI32(0)        		  // total amount of deposited tokens to the session by users
-	session.rewardUnit = BigInt.fromI32(event.params.reward.toI32() / session.period.toI32())    		  // reward per second = totalReward/period
+	session.rewardUnit = event.params.reward.div(session.period)    		  // reward per second = totalReward/period
 	session.interestPerToken = BigInt.fromI32(0) 	// total earned interest per token since the beginning of the session
 	session.claimedPerToken = BigInt.fromI32(0)    // total amount of tokens earned by a one staked token, since the beginning of the session
 	session.lastInterestUpdate = event.params.startTime // last time when claimedPerToken and interestPerToken

@@ -1,13 +1,13 @@
 {
-  "name": "profit-circus-rinkeby-graph",
+  "name": "profit-circus-rinkeby",
   "license": "UNLICENSED",
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ blocklords/profit-circus-rinkeby-graph",
-    "create-local": "graph create --node http://localhost:8020/ blocklords/profit-circus-rinkeby-graph",
-    "remove-local": "graph remove --node http://localhost:8020/ blocklords/profit-circus-rinkeby-graph",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 blocklords/profit-circus-rinkeby-graph"
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ westdabestdb/profit-circus-rinkeby",
+    "create-local": "graph create --node http://localhost:8020/ westdabestdb/profit-circus-rinkeby",
+    "remove-local": "graph remove --node http://localhost:8020/ westdabestdb/profit-circus-rinkeby",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 westdabestdb/profit-circus-rinkeby"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.20.0",
